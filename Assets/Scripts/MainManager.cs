@@ -11,21 +11,22 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text BestScoreText;
     public GameObject GameOverText;
-    
+
     private bool m_Started = false;
     private int m_Points;
-    
+
     private bool m_GameOver = false;
 
-    
+
     // Start is called before the first frame update
     void Start()
     {
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
-        
-        int[] pointCountArray = new [] {1,1,2,2,5,5};
+
+        int[] pointCountArray = new[] { 1, 1, 2, 2, 5, 5 };
         for (int i = 0; i < LineCount; ++i)
         {
             for (int x = 0; x < perLine; ++x)
@@ -36,6 +37,8 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+
+        UpdateBestScore();
     }
 
     private void Update()
@@ -65,12 +68,33 @@ public class MainManager : MonoBehaviour
     void AddPoint(int point)
     {
         m_Points += point;
+        DataStorage.instance.current.score = m_Points;
         ScoreText.text = $"Score : {m_Points}";
+        UpdateBestScore();
     }
 
     public void GameOver()
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+    }
+
+    private void UpdateBestScore()
+    {
+        DataStorage.ScoreData best = DataStorage.instance.best;
+        DataStorage.ScoreData curr = DataStorage.instance.current;
+
+        if (curr.score != 0 && (null == best || best.playerName == null || curr.score > best.score))
+        {
+            best = DataStorage.instance.SaveBestScore(curr).best;
+        }
+
+        if (null == best || best.playerName == null)
+        {
+            BestScoreText.text = "Best score: 0";
+            return;
+        }
+
+        BestScoreText.text = $"Best score: {best.playerName}: {best.score}";
     }
 }
